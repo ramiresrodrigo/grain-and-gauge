@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 40px; }
+  .form-container { background: #fff; padding: 20px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-width: 620px; }
+  input { padding: 10px; margin-right: 10px; border: 1px solid #ddd; border-radius: 4px; }
+  button { padding: 10px 20px; background: #2ecc71; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+  button:hover { background: #27ae60; }
+  
+  #project-container { display: flex; gap: 20px; flex-wrap: wrap; }
+  .customer-card { background: white; border-radius: 8px; border-left: 6px solid #2ecc71; width: 340px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+  h2 { margin: 5px 0; font-size: 1.1em; }
+</style>
+</head>
+<body>
+
+  <h1>Grain & Gauge: Add New Job</h1>
+
+  <input type="text" id="searchInput" placeholder="Search by customer name..." oninput="searchJobs()" style="width: 95%; margin-bottom: 20px; padding: 12px; border: 2px solid #3498db;">
+  
+  <div class="form-container">
+    <input type="text" id="custName" placeholder="Customer Name">
+    <input type="text" id="projName" placeholder="Project (e.g. Cabinet)">
+    <input type="number" id="projPrice" placeholder="Price ($)">
+    <button onclick="addJob()">Add to Board</button>
+  </div>
+
+  <div id="project-container">
+    </div>
+
+  <script>
+ // 1. LOAD: When the page opens, grab any saved jobs from the "Storage Locker"
+let jobs = JSON.parse(localStorage.getItem('myJobs')) || [];
+renderJobs(); // Run the function to draw them on the screen
+
+function addJob() {
+    const name = document.getElementById('custName').value;
+    const project = document.getElementById('projName').value;
+    const price = document.getElementById('projPrice').value;
+
+    if(name === "" || project === "") return;
+
+    // 2. CREATE: Make a new job object
+    const newJob = { 
+        id: Date.now(), // Unique ID like a serial number
+        name, 
+        project, 
+        price 
+    };
+
+    // 3. SAVE: Add it to our list and put the list in the "Storage Locker"
+    jobs.push(newJob);
+    localStorage.setItem('myJobs', JSON.stringify(jobs));
+
+    renderJobs(); // Redraw the board
+    clearForm();
+}
+
+function renderJobs(jobsToDisplay = jobs) {
+    const container = document.getElementById('project-container');
+    container.innerHTML = ''; // Clear the board before redrawing
+
+    // 4. DISPLAY: For every job in our list, build a card
+    jobsToDisplay.forEach(job => {
+        const card = document.createElement('div');
+        card.className = 'customer-card';
+        card.innerHTML = `
+            <span style="font-size: 10px; font-weight: bold; color: #2ecc71;">ACTIVE</span>
+            <h2>${job.name}</h2>
+            <p>Project: ${job.project}</p>
+            <p><strong>$${job.price}</strong></p>
+            <button onclick="deleteJob(${job.id})" style="background:#e74c3c; font-size: 10px; border:none; color:white; padding:5px; cursor:pointer;">Delete</button>
+        `;
+        container.appendChild(card);
+    });
+    
+function updateFinances() {
+    // 1. The REDUCE Method: Calculating the total "Bank"
+    // It starts at 0 and adds every job's price to the 'accumulator'
+    const totalValue = jobs.reduce((sum, job) => sum + Number(job.price), 0);
+
+    // 2. The FILTER Method: Finding the "Big Projects"
+    // This creates a new list of only the jobs that cost more than $5,000
+    const bigJobs = jobs.filter(job => job.price > 5000);
+
+    // 3. Update the UI
+    const statsContainer = document.getElementById('stats');
+    statsContainer.innerHTML = `
+        <div style="background: #2c3e50; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <strong>Total Revenue in Progress:</strong> $${totalValue.toLocaleString()} | 
+            <strong>High Value Projects:</strong> ${bigJobs.length}
+        </div>
+    `;
+}}
+
+function deleteJob(id) {
+    // 5. REMOVE: Filter out the job with that ID and update storage
+    jobs = jobs.filter(job => job.id !== id);
+    localStorage.setItem('myJobs', JSON.stringify(jobs));
+    renderJobs();
+}
+
+function clearForm() {
+    document.getElementById('custName').value = '';
+    document.getElementById('projName').value = '';
+    document.getElementById('projPrice').value = '';
+}
+
+function searchJobs() {
+    // 1. Get the text the user is typing and make it lowercase
+    const query = document.getElementById('searchInput').value.toLowerCase();
+
+    // 2. Filter our 'jobs' list based on that query
+    const filteredJobs = jobs.filter(job => 
+        job.name.toLowerCase().includes(query)
+    );
+
+    // 3. Redraw the board, but ONLY with the filtered results
+    renderJobs(filteredJobs); 
+}
+  </script>
+
+</body>
+</html>
